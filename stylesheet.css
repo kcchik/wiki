@@ -1,3 +1,37 @@
+body {
+  font-family: courier;
+  font-size: 12px;
+  margin: 16px;
+}
+
+p {
+  margin: 0.5em 0;
+}
+
 a {
-  color: red;
+  display: block;
+  margin: 0.5em 0;
+  color: #5af;
+}
+
+summary {
+  cursor: pointer;
+  margin: 0.5em 0;
+}
+
+summary::-webkit-details-marker {
+  display: none;
+}
+
+summary:focus {
+  outline: none;
+}
+
+.container {
+  display: grid;
+  grid-template-columns: 200px auto;
+}
+
+.folder-content {
+  margin-left: 1.4em;
 }

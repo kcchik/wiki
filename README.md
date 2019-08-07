@@ -1,4 +1,4 @@
-# Tinki Winki
+# Wiki
 
 An attempt at a small, but usable wiki engine.
 

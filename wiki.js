@@ -49,7 +49,8 @@ const ls = (root, callback) => {
 
 const send = (status, res, content, type='text/html') => {
   res.writeHead(status, { 'Content-Type': type });
-  res.end(content, 'utf-8');
+  res.send(content, 'utf-8');
+  res.end();
 };
 
 const renderPage = (res, file, query) => {
@@ -92,10 +93,7 @@ const renderOther = (res, file, ext) => {
   const type = mime[ext] || 'application/octet-stream';
 
   fs.readFile(`.${file}`, (err, content) => {
-    if (typeof content === 'object') {
-      send(200, res, 'content')
-    }
-    // err ? send(404, res, err) : send(200, res, content, type);
+    err ? send(404, res, err) : send(200, res, content, type);
   });
 };
 

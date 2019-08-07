@@ -1,8 +1,5 @@
-const http = require('http');
 const path = require('path');
-const url = require('url');
 const fs = require('fs');
-const marked = require('marked');
 
 const pwd = (file, query=null) => {
   let files = file.split(/(?=\/)/g);
@@ -72,7 +69,7 @@ const renderPage = (res, file, query) => {
           if (err) {
             mount(404, `<h1>404</h1><p>${err}</p>`);
           } else {
-            mount(200, `<p>${pwd(file, query)}</p>${marked(markdown)}`);
+            mount(200, `<p>${pwd(file, query)}</p>${require('marked')(markdown)}`);
           }
         })
       } else {
@@ -99,8 +96,8 @@ const renderOther = (res, file, ext) => {
   });
 };
 
-http.createServer((req, res) => {
-  let { pathname, query } = url.parse(req.url);
+require('http').createServer((req, res) => {
+  let { pathname, query } = require('url').parse(req.url);
   pathname = decodeURI(pathname);
   query = query ? decodeURI(query) : null;
   const ext = path.extname(pathname);

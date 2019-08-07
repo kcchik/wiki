@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "start": "node wiki.js"
+  },
   "dependencies": {
     "marked": "^0.7.0"
   }

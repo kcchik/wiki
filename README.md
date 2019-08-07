@@ -13,5 +13,5 @@ Install dependencies and start
 ```sh
 yarn
 
-node wiki.js
+yarn start
 ```

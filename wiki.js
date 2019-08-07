@@ -49,7 +49,7 @@ const ls = (root, callback) => {
 
 const send = (status, res, content, type='text/html') => {
   res.writeHead(status, { 'Content-Type': type });
-  res.end(content);
+  res.end(content, 'utf-8');
 };
 
 const renderPage = (res, file, query) => {

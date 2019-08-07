@@ -1,6 +1,10 @@
 const path = require('path');
 const fs = require('fs');
+const url = require('url');
+const http = require('http');
+const marked = require('marked');
 
+// Markup for breadcrumbs
 const pwd = (file, query=null) => {
   let files = file.split(/(?=\/)/g);
   let crumbs = '';
@@ -17,8 +21,9 @@ const pwd = (file, query=null) => {
   return files.map((file) => `<a href="${file.url}">${file.name}</a>`).join('<span> > </span>');
 };
 
+// Markup for directory content
 const ls = (root, callback) => {
-  const formattedRoot = root.replace(/^\.\/pages[/]?/, '/');
+  const trimmedRoot = root.replace(/^\.\/pages[/]?/, '/');
   let str = '<div>';
   fs.readdir(root, (err, list) => {
     if (err) return callback(err);
@@ -33,12 +38,13 @@ const ls = (root, callback) => {
         if (err) return callback(err);
 
         if (stat.isDirectory()) {
-          str += `<p><a href="${path.resolve(formattedRoot, file)}">${file}</a></p>`;
+          str += `<p><a href="${path.resolve(trimmedRoot, file)}">${file}</a></p>`;
           next();
         } else {
           const ext = path.extname(file);
           if (ext === '.md') {
-            str += `<p><a href="${formattedRoot}?${file.replace(/\.md$/, '')}">${file.replace(/\.md$/, '')}</a></p>`;
+            const trimmedFile = file.replace(/\.md$/, '')
+            str += `<p><a href="${trimmedRoot}?${trimmedFile}">${trimmedFile}</a></p>`;
           }
           next();
         }
@@ -60,17 +66,17 @@ const renderPage = (res, file, query) => {
     ls('./pages', (err, tree) => {
       if (err) throw err;
 
+      html = html.replace('_tree_', tree);
+
       const mount = (status, content) => {
         send(status, res, html.replace('_content_', content));
       };
-
-      html = html.replace('_tree_', tree);
       if (query) {
         fs.readFile(path.resolve(`./pages${file}`, `${query}.md`), 'utf8', (err, markdown) => {
           if (err) {
             mount(404, `<h1>404</h1><p>${err}</p>`);
           } else {
-            mount(200, `<p>${pwd(file, query)}</p>${require('marked')(markdown)}`);
+            mount(200, `<p>${pwd(file, query)}</p>${marked(markdown)}`);
           }
         })
       } else {
@@ -97,8 +103,9 @@ const renderOther = (res, file, ext) => {
   });
 };
 
-require('http').createServer((req, res) => {
-  let { pathname, query } = require('url').parse(req.url);
+const port = process.env.PORT || 8125;
+http.createServer((req, res) => {
+  let { pathname, query } = url.parse(req.url);
   pathname = decodeURI(pathname);
   query = query ? decodeURI(query) : null;
   const ext = path.extname(pathname);
@@ -106,6 +113,6 @@ require('http').createServer((req, res) => {
     query = 'home';
   }
   ext ? renderOther(res, pathname, ext) : renderPage(res, pathname, query);
-}).listen(process.env.PORT || 8125);
+}).listen(port);
 
-console.log(`http://127.0.0.1:${process.env.PORT || 8125}`)
+console.log(port)

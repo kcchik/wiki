@@ -95,7 +95,7 @@ const renderOther = (res, file, ext) => {
     if (typeof content === 'object') {
       send(200, res, 'content')
     }
-    err ? send(404, res, err) : send(200, res, content, type);
+    // err ? send(404, res, err) : send(200, res, content, type);
   });
 };
 

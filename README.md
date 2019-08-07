@@ -1,6 +1,17 @@
-# Wiki
+# Tinki Winki
 
-### File navigation
-1. File tree on the left
-2. Top level files on the left, opening folders will show links to sub folders
-3. No folders
+An attempt at a small, but usable wiki engine.
+
+### Requirements
+- Node.js
+- Yarn
+
+### Installing
+Put `.md` files in the `pages` directory.
+
+Install dependencies and start
+```sh
+yarn
+
+node wiki.js
+```

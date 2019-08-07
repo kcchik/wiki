@@ -1,37 +1,23 @@
 body {
-  font-family: courier;
-  font-size: 12px;
-  margin: 16px;
+  margin: 20px;
 }
 
-p {
-  margin: 0.5em 0;
+body, table {
+  font: 12px courier;
 }
 
 a {
-  display: block;
-  margin: 0.5em 0;
-  color: #5af;
+  color: #49f;
 }
 
-summary {
-  cursor: pointer;
-  margin: 0.5em 0;
+a:hover {
+  color: #9cf;
 }
 
-summary::-webkit-details-marker {
-  display: none;
+td {
+  vertical-align: top;
 }
 
-summary:focus {
-  outline: none;
-}
-
-.container {
-  display: grid;
-  grid-template-columns: 200px auto;
-}
-
-.folder-content {
-  margin-left: 1.4em;
+td:nth-child(1) {
+  width: 10em;
 }

@@ -92,6 +92,9 @@ const renderOther = (res, file, ext) => {
   const type = mime[ext] || 'application/octet-stream';
 
   fs.readFile(`.${file}`, (err, content) => {
+    if (typeof content === 'object') {
+      send(200, res, 'content')
+    }
     err ? send(404, res, err) : send(200, res, content, type);
   });
 };

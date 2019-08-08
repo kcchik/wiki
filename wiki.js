@@ -4,8 +4,7 @@ const url = require('url');
 const http = require('http');
 const marked = require('marked');
 
-// Markup for breadcrumbs
-const pwd = (file, query=null) => {
+const breadCrumbs = (file, query=null) => {
   let files = file.split(/(?=\/)/g);
   let crumbs = '';
   files = files.filter((file) => file !== '/').map((file) => ({
@@ -21,8 +20,17 @@ const pwd = (file, query=null) => {
   return files.map((file) => `<a href="${file.url}">${file.name}</a>`).join('<span> > </span>');
 };
 
-// Markup for directory content
-const ls = (root, callback) => {
+const listHeaders = (content) => {
+  let str = '<h4>Contents</h4>';
+  let headers = content.match(/(?<=id=").+(?=")/g);
+  if (!headers || headers.length === 1) return '';
+  for (let header of headers) {
+    str += `<p><a href="#${header}">${header}</a></p>`;
+  };
+  return str;
+};
+
+const listFiles = (root, callback) => {
   const trimmedRoot = root.replace(/^\.\/pages[/]?/, '/');
   let str = '<div>';
   fs.readdir(root, (err, list) => {
@@ -63,28 +71,30 @@ const renderPage = (res, file, query) => {
   fs.readFile('./index.html', 'utf8', (err, html) => {
     if (err) throw err;
 
-    ls('./pages', (err, tree) => {
+    listFiles('./pages', (err, tree) => {
       if (err) throw err;
 
-      html = html.replace('_tree_', tree);
-
       const mount = (status, content) => {
+        html = html.replace('_tree_', tree);
         send(status, res, html.replace('_content_', content));
       };
+
+      tree = `<h4>Menu</h4>${tree}`;
       if (query) {
         fs.readFile(path.resolve(`./pages${file}`, `${query}.md`), 'utf8', (err, markdown) => {
           if (err) {
             mount(404, `<h1>404</h1><p>${err}</p>`);
           } else {
-            mount(200, `<p>${pwd(file, query)}</p>${marked(markdown)}`);
+            tree = `${listHeaders(marked(markdown))}${tree}`;
+            mount(200, `<p>${breadCrumbs(file, query)}</p>${marked(markdown)}`);
           }
         })
       } else {
-        ls(`./pages${file}`, (err, tree) => {
+        listFiles(`./pages${file}`, (err, tree) => {
           if (err) {
             mount(404, `<h1>404</h1><p>${err}</p>`);
           } else {
-            mount(200, `<p>${pwd(file)}</p><h1>${file.split('/').pop()}</h1>${tree}`);
+            mount(200, `<p>${breadCrumbs(file)}</p><h1>${file.split('/').pop()}</h1>${tree}`);
           }
         });
       }
@@ -93,13 +103,8 @@ const renderPage = (res, file, query) => {
 };
 
 const renderOther = (res, file, ext) => {
-  const mime = {
-    '.css': 'text/css',
-  };
-  const type = mime[ext] || 'application/octet-stream';
-
   fs.readFile(`.${file}`, (err, content) => {
-    err ? send(404, res, '') : send(200, res, content, type);
+    err ? send(404, res, '') : send(200, res, content, 'application/octet-stream');
   });
 };
 

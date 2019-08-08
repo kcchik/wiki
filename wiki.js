@@ -115,4 +115,4 @@ http.createServer((req, res) => {
   ext ? renderOther(res, pathname, ext) : renderPage(res, pathname, query);
 }).listen(port);
 
-console.log(port)
+console.log(`http://127.0.0.1:${port}`);

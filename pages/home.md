@@ -1,2 +1,0 @@
-# Home
-Wiki home

@@ -14,10 +14,16 @@ a:hover {
   color: #9cf;
 }
 
-td {
-  vertical-align: top;
+th {
+  text-align: left;
+  padding-right: 20px;
 }
 
-td:nth-child(1) {
+td {
+  vertical-align: top;
+  padding-right: 20px;
+}
+
+.tree {
   width: 10em;
 }

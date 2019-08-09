@@ -16,12 +16,14 @@ a:hover {
 
 th {
   text-align: left;
-  padding-right: 20px;
 }
 
 td {
   vertical-align: top;
-  padding-right: 20px;
+}
+
+th, td {
+  padding-right: 2em;
 }
 
 .tree {

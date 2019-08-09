@@ -3,7 +3,7 @@ body {
 }
 
 body, table {
-  font: 12px courier;
+  font: 14px courier;
 }
 
 a {
@@ -24,6 +24,12 @@ td {
 
 th, td {
   padding-right: 3em;
+}
+
+code {
+  background-color: #eee;
+  padding: 0 3px;
+  border-radius: 2px;
 }
 
 .tree {

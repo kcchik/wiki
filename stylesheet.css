@@ -45,6 +45,13 @@ code {
   border-radius: 2px;
 }
 
+pre code {
+  display: inline-block;
+  white-space: pre-wrap;
+  width: 90%;
+  padding: 10px;
+}​
+
 .tree {
   width: 10em;
 }

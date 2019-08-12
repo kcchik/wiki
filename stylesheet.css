@@ -6,12 +6,25 @@ body, table {
   font: 14px courier;
 }
 
+p {
+  line-height: 1.7em;
+}
+
 a {
   color: #49f;
 }
 
 a:hover {
   color: #9cf;
+}
+
+table {
+  border-spacing: 0;
+}
+
+tr:nth-child(even) {
+  background: #eee;
+  border-radius: 2px;
 }
 
 th {
@@ -23,11 +36,11 @@ td {
 }
 
 th, td {
-  padding-right: 3em;
+  padding: 5px 3em 5px 5px;
 }
 
 code {
-  background-color: #eee;
+  background: #eee;
   padding: 0 3px;
   border-radius: 2px;
 }

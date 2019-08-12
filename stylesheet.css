@@ -3,7 +3,11 @@ body {
 }
 
 body, table {
-  font: 12px courier;
+  font: 14px courier;
+}
+
+p {
+  line-height: 1.7em;
 }
 
 a {
@@ -12,6 +16,15 @@ a {
 
 a:hover {
   color: #9cf;
+}
+
+table {
+  border-spacing: 0;
+}
+
+tr:nth-child(even) {
+  background: #eee;
+  border-radius: 2px;
 }
 
 th {
@@ -23,8 +36,21 @@ td {
 }
 
 th, td {
-  padding-right: 2em;
+  padding: 5px 3em 5px 5px;
 }
+
+code {
+  background: #eee;
+  padding: 0 3px;
+  border-radius: 2px;
+}
+
+pre code {
+  display: inline-block;
+  white-space: pre-wrap;
+  width: 90%;
+  padding: 10px;
+}​
 
 .tree {
   width: 10em;

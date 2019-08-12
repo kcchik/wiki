@@ -52,7 +52,11 @@ const listFiles = (root, callback) => {
           const ext = path.extname(file);
           if (ext === '.md') {
             const trimmedFile = file.replace(/\.md$/, '')
-            str += `<p><a href="${trimmedRoot}?${trimmedFile}">${trimmedFile}</a></p>`;
+            if (trimmedFile === 'home') {
+              str = `<p><a href="${trimmedRoot}?${trimmedFile}">${trimmedFile}</a></p>${str}`;
+            } else {
+              str += `<p><a href="${trimmedRoot}?${trimmedFile}">${trimmedFile}</a></p>`;
+            }
           }
           next();
         }

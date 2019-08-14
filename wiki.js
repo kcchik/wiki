@@ -153,6 +153,9 @@ const editPage = (req, res, pathname) => {
 
 const port = process.env.PORT || 8125;
 http.createServer((req, res) => {
+  if (!fs.existsSync('./pages')) {
+    fs.mkdirSync('./pages');
+  }
   let { pathname, query } = url.parse(req.url);
   pathname = decodeURI(pathname);
   query = query ? decodeURI(query).split('&') : null;

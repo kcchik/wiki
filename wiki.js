@@ -4,25 +4,43 @@ const url = require('url');
 const http = require('http');
 const marked = require('marked');
 
-const breadCrumbs = (file, query=null) => {
-  let files = file.split(/(?=\/)/g);
+const cleanDirectories = (dir) => {
+  if (!fs.statSync(dir).isDirectory()) return;
+  let files = fs.readdirSync(dir);
+
+  if (files.length > 0) {
+    for (let file of files) {
+      cleanDirectories(path.join(dir, file));
+    }
+    files = fs.readdirSync(dir);
+  }
+
+  if (files.length === 0) {
+    fs.rmdirSync(dir);
+  }
+}
+
+const breadCrumbs = (pathname, query=null) => {
   let crumbs = '';
-  files = files.filter((file) => file !== '/').map((file) => ({
-    url: encodeURI(crumbs += file),
-    name: file.replace('/', ''),
-  }));
+  let files = pathname
+    .split(/(?=\/)/g)
+    .filter((pathname) => pathname !== '/')
+    .map((pathname) => ({
+      url: encodeURI(crumbs += pathname),
+      name: pathname.replace('/', ''),
+    }));
   if (query) {
     files = [...files, {
       url: `?${query}`,
-      name: decodeURI(query),
+      name: query,
     }];
   }
   return files.map((file) => `<a href="${file.url}">${file.name}</a>`).join('<span> > </span>');
 };
 
 const listHeaders = (content) => {
-  let str = '<h4>Contents</h4>';
-  let headers = content.match(/(?<=id=").+(?=")/g);
+  const headers = content.match(/(?<=id=").+(?=")/g);
+  let str = '<h4>Content</h4>';
   if (!headers || headers.length === 1) return '';
   for (let header of headers) {
     str += `<p><a href="#${header}">${header}</a></p>`;
@@ -30,39 +48,20 @@ const listHeaders = (content) => {
   return str;
 };
 
-const listFiles = (root, callback) => {
-  const trimmedRoot = root.replace(/^\.\/pages[/]?/, '/');
+const listFiles = (dir) => {
+  const pathname = dir.replace(/^\.\/pages[/]?/, '/');
+  const files = fs.readdirSync(dir);
   let str = '<div>';
-  fs.readdir(root, (err, list) => {
-    if (err) return callback(err);
-
-    let i = 0;
-    (function next() {
-      const file = list[i++];
-      if (!file) return callback(null, `${str}</div>`);
-
-      const child = `${root}/${file}`;
-      fs.stat(child, (err, stat) => {
-        if (err) return callback(err);
-
-        if (stat.isDirectory()) {
-          str += `<p><a href="${path.resolve(trimmedRoot, file)}">${file}</a></p>`;
-          next();
-        } else {
-          const ext = path.extname(file);
-          if (ext === '.md') {
-            const trimmedFile = file.replace(/\.md$/, '')
-            if (trimmedFile === 'home') {
-              str = `<p><a href="${trimmedRoot}?${trimmedFile}">${trimmedFile}</a></p>${str}`;
-            } else {
-              str += `<p><a href="${trimmedRoot}?${trimmedFile}">${trimmedFile}</a></p>`;
-            }
-          }
-          next();
-        }
-      });
-    }());
-  });
+  for (let file of files) {
+    if (fs.statSync(`${dir}/${file}`).isDirectory()) {
+      str += `<p><a href="${path.resolve(pathname, file)}">${file}/</a></p>`;
+    } else if (path.extname(file) === '.md') {
+      const query = file.replace(/\.md$/, '');
+      const link = `<p><a href="${pathname}?${query}">${query}</a></p>`;
+      str = query === 'home' ? link + str : str + link;
+    }
+  }
+  return `${str}</div>`;
 };
 
 const send = (status, res, content, type='text/html') => {
@@ -71,57 +70,102 @@ const send = (status, res, content, type='text/html') => {
   res.end();
 };
 
-const renderPage = (res, file, query) => {
-  fs.readFile('./index.html', 'utf8', (err, html) => {
-    if (err) throw err;
+const renderPage = (res, pathname, query) => {
+  let html = fs.readFileSync('./index.html', 'utf8');
+  let tree = `<h4>Menu</h4>${listFiles('./pages')}`;
 
-    listFiles('./pages', (err, tree) => {
-      if (err) throw err;
+  const mount = (status, content) => {
+    html = html.replace('_tree_', tree);
+    send(status, res, html.replace('_content_', `<div>${content}</div>`));
+  };
 
-      const mount = (status, content) => {
-        html = html.replace('_tree_', tree);
-        send(status, res, html.replace('_content_', content));
-      };
-
-      tree = `<h4>Menu</h4>${tree}`;
-      if (query) {
-        fs.readFile(path.resolve(`./pages${file}`, `${query}.md`), 'utf8', (err, markdown) => {
-          if (err) {
-            mount(404, `<h1>404</h1><p>${err}</p>`);
-          } else {
-            tree = `${listHeaders(marked(markdown))}${tree}`;
-            mount(200, `<p>${breadCrumbs(file, query)}</p>${marked(markdown)}`);
-          }
-        })
+  if (query) {
+    fs.readFile(path.resolve(`./pages${pathname}`, `${query[0]}.md`), 'utf8', (err, markdown) => {
+      if (query[1] === 'edit') {
+        mount(200, `<form class="edit" action="${pathname}" method="POST">`
+          + `<input type="hidden" name="file" value="${query[0]}" />`
+          + `<p>${breadCrumbs(pathname, query[0])}</p>`
+          + `<div>`
+          + `<input class="edit_textfield" type="password" name="password" placeholder="password" />&nbsp;`
+          + `<input class="edit_button" type="submit" name="action" value="save" />&nbsp;`
+          + `<input class="edit_button" type="submit" name="action" value="delete" />`
+          + `</div>`
+          + `<textarea class="edit_textarea" name="content">${markdown ? markdown : ''}</textarea>`
+          + `</form>`);
+      } else if (err) {
+        mount(404, `<h1>404</h1><a href="${pathname}?${query[0]}&edit">create new file</a>`);
       } else {
-        listFiles(`./pages${file}`, (err, tree) => {
-          if (err) {
-            mount(404, `<h1>404</h1><p>${err}</p>`);
-          } else {
-            mount(200, `<p>${breadCrumbs(file)}</p><h1>${file.split('/').pop()}</h1>${tree}`);
-          }
-        });
+        tree = `${listHeaders(marked(markdown))}${tree}`;
+        mount(200, `<p>${breadCrumbs(pathname, query[0])}</p>${marked(markdown)}`);
       }
     });
-  });
+  } else {
+    let subtree;
+    try {
+      subtree = listFiles(`./pages${pathname}`);
+    } catch (err) {
+      mount(404, `<h1>404</h1><p>${err}</p>`);
+      return;
+    }
+    mount(200, `<p>${breadCrumbs(pathname)}</p><h1>${pathname.split('/').pop()}</h1>${subtree}`);
+  }
 };
 
-const renderOther = (res, file, ext) => {
-  fs.readFile(`.${file}`, (err, content) => {
-    err ? send(404, res, '') : send(200, res, content, 'application/octet-stream');
-  });
+const renderOther = (res, file) => {
+  try {
+    send(200, res, fs.readFileSync(`.${file}`), 'application/octet-stream');
+  } catch (err) {
+    send(404, res, '');
+  }
 };
+
+const editPage = (req, res, pathname) => {
+  let data = '';
+  req.on('data', (chunk) => {
+    data += chunk;
+  });
+  req.on('end', () => {
+      const params = url.parse(`?${data}`, true).query;
+      const password = process.env.PASS || 'password';
+      let redirect;
+      let dir;
+      if (params.password !== password) {
+        redirect = `${pathname}?${params.file}&edit`;
+      } else if (params.action === 'delete') {
+        dir = path.resolve(`./pages${pathname}`, `${params.file}.md`);
+        if (fs.existsSync(dir)) {
+          fs.unlinkSync(dir);
+          cleanDirectories('./pages');
+        }
+        redirect = '/?home';
+      } else {
+        dir = `./pages${pathname}`;
+        if (!fs.existsSync(dir)) {
+          fs.mkdirSync(dir, { recursive: true });
+        }
+        fs.writeFileSync(path.resolve(dir, `${params.file}.md`), params.content);
+        redirect = `${pathname}?${params.file}`;
+      }
+      res.writeHead(301, { Location: redirect });
+      res.end();
+  });
+}
 
 const port = process.env.PORT || 8125;
 http.createServer((req, res) => {
   let { pathname, query } = url.parse(req.url);
   pathname = decodeURI(pathname);
-  query = query ? decodeURI(query) : null;
-  const ext = path.extname(pathname);
-  if (pathname === '/' && !query) {
-    query = 'home';
+  query = query ? decodeURI(query).split('&') : null;
+  if (req.method === 'POST') {
+    editPage(req, res, pathname);
+  } else if (pathname === '/' && !query) {
+    res.writeHead(301, { Location: '?home' });
+    res.end();
+  } else if (path.extname(pathname)) {
+    renderOther(res, pathname);
+  } else {
+    renderPage(res, pathname, query);
   }
-  ext ? renderOther(res, pathname, ext) : renderPage(res, pathname, query);
 }).listen(port);
 
 console.log(`http://127.0.0.1:${port}`);

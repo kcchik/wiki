@@ -93,7 +93,7 @@ const renderPage = (res, pathname, query) => {
           + `<textarea class="edit_textarea" name="content">${markdown ? markdown : ''}</textarea>`
           + `</form>`);
       } else if (err) {
-        mount(404, `<h1>404</h1><a href="${pathname}?${query[0]}&edit">create new file</a>`);
+        mount(404, `<h1>404</h1><p>${err}</p>`);
       } else {
         tree = `${listHeaders(marked(markdown))}${tree}`;
         mount(200, `<p>${breadCrumbs(pathname, query[0])}</p>${marked(markdown)}`);

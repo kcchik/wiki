@@ -1,22 +1,80 @@
 body {
-  margin: 20px;
+  display: grid;
+  grid-template-columns: 0 10em auto 0;
+  grid-template-rows: 7em auto 30px;
+  grid-gap: 0 30px;
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
 }
 
 body, table, textarea, input {
   font: 14px courier;
 }
 
+.header {
+  grid-column: 2 / 4;
+  grid-row: 1;
+  align-self: end;
+}
+
+.tree {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.content {
+  grid-column: 3;
+  grid-row: 2;
+  display: grid;
+}
+
+.delete {
+  display: none;
+  margin: 0;
+}
+
+.edit {
+  display: grid;
+  grid-template-rows: 3em 3em 1fr;
+  justify-items: left;
+  height: 100%;
+  margin: 0;
+}
+
+.edit_button {
+  padding: 0;
+  border: none;
+  line-height: 1.7em;
+}
+
+.edit_textfield {
+  padding: 5px;
+  border: 1px #ccc solid;
+  border-radius: 3px;
+  outline: none;
+}
+
+.edit_textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px #ccc solid;
+  border-radius: 3px;
+  outline: none;
+  resize: none;
+}
+
 p {
   line-height: 1.7em;
 }
 
-a, input {
+a, input[type=submit] {
   color: #49f;
   cursor: pointer;
-  text-decoration: underline;
+  text-decoration: none;
 }
 
-a:hover, input:hover {
+a:hover, input[type=submit]:hover {
   color: #9cf;
 }
 
@@ -37,37 +95,4 @@ td {
 tr:nth-child(even) {
   background: #eee;
   border-radius: 2px;
-}
-
-.container {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.container_tree {
-  width: 10em;
-}
-
-.container_content {
-  height: 0;
-}
-
-.edit {
-  height: 100%;
-}
-
-.edit_button {
-  padding: 0;
-  border: none;
-  line-height: 1.7em;
-}
-
-.edit_textarea {
-  padding: 10px;
-  resize: none;
-  width: 100%;
-  height: 100%;
-  outline: none;
-  border: 1px #ccc solid;
-  border-radius: 3px;
 }

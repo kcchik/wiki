@@ -1,4 +1,4 @@
-# Gym
+# Gyma
 |Date|OHP|Bench|Squat|Deadlift|Pullups|Cardio|Accessories|
 |----|---|-----|-----|--------|-------|------|-----------|
 |Jul 08, 2019|||||14, 12, 9, 8, 6|
@@ -8,3 +8,4 @@
 |Aug 07, 2019|105 5x5|185 1x5|
 |Aug 12, 2019|135 1RM||225 5x5||10, 8, 10|
 |Aug 13, 2019||185 5x5|||||Close grip bench, lateral raises, curls|
+

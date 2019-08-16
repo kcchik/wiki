@@ -3,6 +3,7 @@
     "start": "node wiki.js"
   },
   "dependencies": {
-    "marked": "^0.7.0"
+    "marked": "^0.7.0",
+    "pg": "^7.12.1"
   }
 }

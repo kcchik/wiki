@@ -3,30 +3,18 @@ const fs = require('fs');
 const url = require('url');
 const http = require('http');
 const marked = require('marked');
+const pg = require('pg');
 
-const cleanDirectories = (dir) => {
-  if (!fs.statSync(dir).isDirectory()) return;
-  let files = fs.readdirSync(dir);
+const port = process.env.PORT || 8125;
+const db = new pg.Client();
 
-  if (files.length > 0) {
-    for (let file of files) {
-      cleanDirectories(path.join(dir, file));
-    }
-    files = fs.readdirSync(dir);
-  }
-
-  if (files.length === 0) {
-    fs.rmdirSync(dir);
-  }
-}
-
-const breadCrumbs = (pathname, query=null) => {
+const breadCrumbs = (pathname, query = null) => {
   let crumbs = '';
   let files = pathname
     .split(/(?=\/)/g)
     .filter((pathname) => pathname !== '/')
     .map((pathname) => ({
-      url: encodeURI(crumbs += pathname),
+      url: `${encodeURI(crumbs += pathname)}/`,
       name: pathname.replace('/', ''),
     }));
   if (query) {
@@ -38,80 +26,32 @@ const breadCrumbs = (pathname, query=null) => {
   return files.map((file) => `<a href="${file.url}">${file.name}</a>`).join('<span> > </span>');
 };
 
-const listHeaders = (content) => {
-  const headers = content.match(/(?<=id=").+(?=")/g);
-  let str = '<h4>Content</h4>';
-  if (!headers || headers.length === 1) return '';
-  for (let header of headers) {
-    str += `<p><a href="#${header}">${header}</a></p>`;
-  };
-  return str;
-};
-
-const listFiles = (dir) => {
-  const pathname = dir.replace(/^\.\/pages[/]?/, '/');
-  const files = fs.readdirSync(dir);
-  let str = '<div>';
-  for (let file of files) {
-    if (fs.statSync(`${dir}/${file}`).isDirectory()) {
-      str += `<p><a href="${path.resolve(pathname, file)}">${file}/</a></p>`;
-    } else if (path.extname(file) === '.md') {
-      const query = file.replace(/\.md$/, '');
-      const link = `<p><a href="${pathname}?${query}">${query}</a></p>`;
-      str = query === 'home' ? link + str : str + link;
-    }
-  }
-  return `${str}</div>`;
-};
-
-const send = (status, res, content, type='text/html') => {
-  res.writeHead(status, { 'Content-Type': type });
-  res.write(content);
-  res.end();
-};
-
-const renderPage = (res, pathname, query) => {
-  let html = fs.readFileSync('./index.html', 'utf8');
-  let tree = `<h4>Menu</h4>${listFiles('./pages')}`;
-
-  const mount = (status, content) => {
-    html = html.replace('_tree_', tree);
-    send(status, res, html.replace('_content_', `<div>${content}</div>`));
-  };
-
-  if (query) {
-    fs.readFile(path.resolve(`./pages${pathname}`, `${query[0]}.md`), 'utf8', (err, markdown) => {
-      if (query[1] === 'edit') {
-        mount(200, `<form class="edit" action="${pathname}" method="POST">`
-          + `<input type="hidden" name="file" value="${query[0]}" />`
-          + `<p>${breadCrumbs(pathname, query[0])}</p>`
-          + `<div>`
-          + `<input class="edit_textfield" type="password" name="password" placeholder="password" />&nbsp;`
-          + `<input class="edit_button" type="submit" name="action" value="save" />&nbsp;`
-          + `<input class="edit_button" type="submit" name="action" value="delete" />`
-          + `</div>`
-          + `<textarea class="edit_textarea" name="content">${markdown ? markdown : ''}</textarea>`
-          + `</form>`);
-      } else if (err) {
-        mount(404, `<h1>404</h1><p>${err}</p>`);
-      } else {
-        tree = `${listHeaders(marked(markdown))}${tree}`;
-        mount(200, `<p>${breadCrumbs(pathname, query[0])}</p>${marked(markdown)}`);
-      }
-    });
-  } else {
-    let subtree;
-    try {
-      subtree = listFiles(`./pages${pathname}`);
-    } catch (err) {
-      mount(404, `<h1>404</h1><p>${err}</p>`);
+const listFiles = (pathname, callback) => {
+  db.query('SELECT name, directory FROM pages WHERE directory LIKE $1', [`${pathname}%`], (err, res) => {
+    if (err) {
+      callback();
       return;
     }
-    mount(200, `<p>${breadCrumbs(pathname)}</p><h1>${pathname.split('/').pop()}</h1>${subtree}`);
-  }
+    const files = res.rows;
+    if (files.length === 0) {
+      callback();
+      return;
+    }
+    const dirs = [];
+    let str = '<div>';
+    files.forEach((file) => {
+      if (file.directory === pathname) {
+        str = `<p><a href="${file.directory}?${file.name}">${file.name}</a></p>${str}`;
+      } else if (file.directory.replace(pathname, '').match(/\//g).length === 1 && !dirs.includes(file.directory)) {
+        dirs.push(file.directory);
+        str = `${str}<p><a href="${file.directory}">${file.directory.slice(1)}</a></p>`;
+      }
+    });
+    callback(`${str}</div>`);
+  });
 };
 
-const renderOther = (res, file) => {
+const sendAsset = (res, file) => {
   try {
     send(200, res, fs.readFileSync(`.${file}`), 'application/octet-stream');
   } catch (err) {
@@ -119,56 +59,119 @@ const renderOther = (res, file) => {
   }
 };
 
-const editPage = (req, res, pathname) => {
+const sendPageFile = (pathname, query, mount) => {
+  db.query('SELECT content FROM pages WHERE name = $1 AND directory = $2', [query[0], pathname], (err, res) => {
+    if (err) throw err;
+
+    const markdown = res.rows.length > 0 ? res.rows[0].content : '';
+    if (query[1] === 'edit') {
+      const form = fs.readFileSync('./form.html', 'utf8')
+        .replace('__pathname__', pathname)
+        .replace('__query__', query[0])
+        .replace('__breadcrumbs__', breadCrumbs(pathname, query[0]))
+        .replace('__markdown__', markdown);
+      mount(200, form);
+    } else if (res.rows.length > 0) {
+      mount(200, `<p>${breadCrumbs(pathname, query[0])}</p>${marked(markdown)}`);
+    } else {
+      mount(404);
+    }
+  });
+};
+
+const sendPageDirectory = (pathname, mount) => {
+  listFiles(pathname, (tree) => {
+    if (tree) {
+      mount(200, `<p>${breadCrumbs(pathname)}</p><h1>${path.basename(pathname)}</h1>${tree}`);
+    } else {
+      mount(404);
+    }
+  });
+};
+
+const sendPage = (res, pathname, query = null) => {
+  listFiles('/', (tree) => {
+    const mount = (status, content = '<h1>404</h1><p>Page not found.</p>') => {
+      const html = fs.readFileSync('./index.html', 'utf8')
+        .replace('_tree_', `<h4>Menu</h4>${tree}`)
+        .replace('_content_', `<div>${content}</div>`);
+      send(status, res, html);
+    };
+
+    if (query) {
+      sendPageFile(pathname, query, mount);
+    } else {
+      sendPageDirectory(pathname, mount);
+    }
+  });
+};
+
+const editPage = (res, pathname, params) => {
+  let redirect;
+  let query;
+  const queryParams = [params.file, pathname];
+  db.query('SELECT COUNT(*) FROM pages WHERE name = $1 AND directory = $2', queryParams, (err, count) => {
+    if (err) throw err;
+    if (params.action === 'delete') {
+      query = 'DELETE FROM pages WHERE name = $1 AND directory = $2';
+      redirect = '/?home';
+    } else {
+      query = count.rows[0].count > 0 ? 'UPDATE pages SET content = $3 WHERE name = $1 AND directory = $2' : 'INSERT INTO pages VALUES ($1, $2, $3)';
+      queryParams.push(params.content);
+      redirect = `${pathname}?${params.file}`;
+    }
+    db.query(query, queryParams, (error) => {
+      if (error) throw error;
+      res.writeHead(301, { Location: redirect });
+      res.end();
+    });
+  });
+};
+
+const sendForm = (req, res, pathname) => {
   let data = '';
   req.on('data', (chunk) => {
     data += chunk;
   });
   req.on('end', () => {
-      const params = url.parse(`?${data}`, true).query;
-      const password = process.env.PASS || 'password';
-      let redirect;
-      let dir;
-      if (params.password !== password) {
-        redirect = `${pathname}?${params.file}&edit`;
-      } else if (params.action === 'delete') {
-        dir = path.resolve(`./pages${pathname}`, `${params.file}.md`);
-        if (fs.existsSync(dir)) {
-          fs.unlinkSync(dir);
-          cleanDirectories('./pages');
-        }
-        redirect = '/?home';
-      } else {
-        dir = `./pages${pathname}`;
-        if (!fs.existsSync(dir)) {
-          fs.mkdirSync(dir, { recursive: true });
-        }
-        fs.writeFileSync(path.resolve(dir, `${params.file}.md`), params.content);
-        redirect = `${pathname}?${params.file}`;
-      }
-      res.writeHead(301, { Location: redirect });
+    const params = url.parse(`?${data}`, true).query;
+    const password = process.env.PASS || 'password';
+    if (params.password !== password) {
+      res.writeHead(301, { Location: `${pathname}?${params.file}&edit` });
       res.end();
+    } else {
+      editPage(res, pathname, params);
+    }
   });
-}
+};
 
-const port = process.env.PORT || 8125;
-http.createServer((req, res) => {
-  if (!fs.existsSync('./pages')) {
-    fs.mkdirSync('./pages');
-  }
-  let { pathname, query } = url.parse(req.url);
-  pathname = decodeURI(pathname);
-  query = query ? decodeURI(query).split('&') : null;
-  if (req.method === 'POST') {
-    editPage(req, res, pathname);
-  } else if (pathname === '/' && !query) {
-    res.writeHead(301, { Location: '?home' });
-    res.end();
-  } else if (path.extname(pathname)) {
-    renderOther(res, pathname);
-  } else {
-    renderPage(res, pathname, query);
-  }
-}).listen(port);
+const send = (status, res, content, type = 'text/html') => {
+  res.writeHead(status, { 'Content-Type': type });
+  res.write(content);
+  res.end();
+};
 
-console.log(`http://127.0.0.1:${port}`);
+db.connect((err) => {
+  if (err) throw err;
+
+  http.createServer((req, res) => {
+    let { pathname, query } = url.parse(req.url);
+
+    if (path.extname(pathname)) {
+      sendAsset(res, pathname);
+      return;
+    }
+
+    pathname = decodeURI(pathname).replace(/\/?$/, '/');
+    if (req.method === 'POST') {
+      sendForm(req, res, pathname);
+    } else if (query) {
+      sendPage(res, pathname, decodeURI(query).split('&'));
+    } else if (pathname !== '/') {
+      sendPage(res, pathname);
+    } else {
+      res.writeHead(301, { Location: '?home' });
+      res.end();
+    }
+  }).listen(port);
+});

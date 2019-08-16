@@ -4,14 +4,17 @@ An attempt at a small, but usable wiki engine.
 
 ### Requirements
 - Node.js
+- Postgres
 - Yarn
 
 ### Installing
-Put `.md` files in the `pages` directory.
+Create a database and set `DATABASE_URL`
 
 Install dependencies and start
 ```sh
 yarn
+
+node build.js
 
 yarn start
 ```

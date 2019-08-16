@@ -6,7 +6,9 @@ const marked = require('marked');
 const pg = require('pg');
 
 const port = process.env.PORT || 8125;
-const db = new pg.Client();
+const db = new pg.Client({
+  connectionString: process.env.DATABASE_URL,
+});
 
 const breadCrumbs = (pathname, query = null) => {
   let crumbs = '';

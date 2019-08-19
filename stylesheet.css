@@ -10,7 +10,7 @@ body {
 }
 
 body, table, textarea, input {
-  font: 14px courier;
+  font: 14px "Courier New";
 }
 
 .header {

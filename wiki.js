@@ -63,7 +63,7 @@ const sendAsset = (res, file) => {
 
 const sendPageFile = (pathname, query, mount) => {
   db.query('SELECT content FROM pages WHERE name = $1 AND directory = $2', [query[0], pathname], (err, res) => {
-    if (err) throw err;
+    if (err) mount(404);
 
     const markdown = res.rows.length > 0 ? res.rows[0].content : '';
     if (query[1] === 'edit') {
@@ -113,20 +113,20 @@ const editPage = (res, pathname, params) => {
   let query;
   const queryParams = [params.file, pathname];
   db.query('SELECT COUNT(*) FROM pages WHERE name = $1 AND directory = $2', queryParams, (err, count) => {
-    if (err) throw err;
-    if (params.action === 'delete') {
-      query = 'DELETE FROM pages WHERE name = $1 AND directory = $2';
-      redirect = '/?home';
-    } else {
-      query = count.rows[0].count > 0 ? 'UPDATE pages SET content = $3 WHERE name = $1 AND directory = $2' : 'INSERT INTO pages VALUES ($1, $2, $3)';
-      queryParams.push(params.content);
-      redirect = `${pathname}?${params.file}`;
+    if (!err) {
+      if (params.action === 'delete') {
+        query = 'DELETE FROM pages WHERE name = $1 AND directory = $2';
+        redirect = '/?home';
+      } else {
+        query = count.rows[0].count > 0 ? 'UPDATE pages SET content = $3 WHERE name = $1 AND directory = $2' : 'INSERT INTO pages VALUES ($1, $2, $3)';
+        queryParams.push(params.content);
+        redirect = `${pathname}?${params.file}`;
+      }
+      db.query(query, queryParams, () => {
+        res.writeHead(301, { Location: redirect });
+        res.end();
+      });
     }
-    db.query(query, queryParams, (error) => {
-      if (error) throw error;
-      res.writeHead(301, { Location: redirect });
-      res.end();
-    });
   });
 };
 

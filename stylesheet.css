@@ -70,6 +70,7 @@ p {
 }
 
 a, input[type=submit] {
+  background: transparent;
   color: #49f;
   cursor: pointer;
   text-decoration: none;
@@ -81,6 +82,7 @@ a:hover, input[type=submit]:hover {
 
 table {
   border-spacing: 0;
+  margin-right: 30px;
 }
 
 th {

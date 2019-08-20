@@ -96,7 +96,7 @@ const sendPage = (res, pathname, query = null) => {
     const mount = (status, content = '<h1>404</h1><p>Page not found.</p>') => {
       const html = fs.readFileSync('./index.html', 'utf8')
         .replace('_tree_', `<h4>Menu</h4>${tree}`)
-        .replace('_content_', `<div>${content}</div>`);
+        .replace('_content_', `<div style="overflow-x: auto;">${content}</div>`);
       send(status, res, html);
     };
 

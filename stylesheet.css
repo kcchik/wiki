@@ -80,6 +80,19 @@ a:hover, input[type=submit]:hover {
   color: #9cf;
 }
 
+code {
+  padding: 0 3px;
+  background: #eee;
+  border-radius: 2px;
+}
+
+pre {
+  padding: 10px;
+  overflow-x: auto;
+  background: #eee;
+  border-radius: 2px;
+}
+
 table {
   border-spacing: 0;
   margin-right: 30px;

@@ -4,19 +4,21 @@ An attempt at a small, but usable wiki engine.
 
 ### Requirements
 - Node.js
-- Postgres
+- PostgreSQL
 - Yarn
 
 ### Installing
-Create a database and set `DATABASE_URL`
-
-Install dependencies and start
+Create a PostgreSQL database
+Install dependencies and build
 ```sh
 yarn
 
-node build.js
+DATABASE_URL=<database_url> node build.js
+```
 
-yarn start
+### Running
+```sh
+DATABASE_URL=<database_url> node wiki.js
 ```
 
 ### Why
@@ -25,6 +27,4 @@ I created this wiki because I wanted to host something very minimal. Couldn't fi
 - No client-side JS
 - 2 dependencies (Postgres and markdown)
 
-Behold - My tiny wiki. It's not as small as [this](https://github.com/jimenezrick/wi-wiki), but I think I did alright.
-
-I should not have made this.
+Behold - My tiny wiki. I should not have made this.

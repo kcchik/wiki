@@ -13,12 +13,12 @@ Install dependencies and build
 ```sh
 yarn
 
-DATABASE_URL=<database_url> node build.js
+DATABASE_URL=<postgres_url> node build.js
 ```
 
 ### Running
 ```sh
-DATABASE_URL=<database_url> node wiki.js
+DATABASE_URL=<postgres_url> node wiki.js
 ```
 
 ### Why

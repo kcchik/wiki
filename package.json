@@ -1,8 +1,10 @@
 {
   "scripts": {
-    "start": "node wiki.js"
+    "build": "node build.js",
+    "start": "node app.js"
   },
   "dependencies": {
+    "dotenv": "^8.1.0",
     "marked": "^0.7.0",
     "pg": "^7.12.1"
   }

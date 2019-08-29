@@ -9,22 +9,28 @@ An attempt at a small, but usable wiki engine.
 
 ### Installing
 Create a PostgreSQL database
+
+Create and populate the `.env` file
+```sh
+cp .env.template .env
+```
+
 Install dependencies and build
 ```sh
 yarn
 
-DATABASE_URL=<postgres_url> node build.js
+yarn run build
 ```
 
 ### Running
 ```sh
-DATABASE_URL=<postgres_url> node wiki.js
+yarn start
 ```
 
 ### Why
 I created this wiki because I wanted to host something very minimal. Couldn't find anything out there quite as lacking in features as I wanted. Here are some of this wiki's (lack of) features:
 - No framework
 - No client-side JS
-- 2 dependencies (Postgres and markdown)
+- Minimal dependencies
 
 Behold - My tiny wiki. I should not have made this.

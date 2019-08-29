@@ -153,15 +153,18 @@ db.connect((err) => {
       return;
     }
 
-    if (pathname === '/' && !query) {
-      res.writeHead(301, { Location: '?home' });
-      res.end();
-      return;
-    }
-
     pathname = decodeURI(pathname).replace(/\/?$/, '/');
     query = query ? decodeURI(query).split('&') : null;
 
-    req.method === 'POST' ? sendForm(req, res, pathname) : sendPage(res, pathname, query);
+    if (req.method === 'POST') {
+      sendForm(req, res, pathname);
+    } else {
+      if (pathname === '/' && !query) {
+        res.writeHead(301, { Location: '?home' });
+        res.end();
+      } else {
+        sendPage(res, pathname, query);
+      }
+    }
   }).listen(process.env.PORT);
 });

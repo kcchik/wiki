@@ -1,6 +1,6 @@
 # Wiki
 
-Small doo doo wiki engine.
+Markdown wiki engine.
 
 ### Requirements
 - Node.js

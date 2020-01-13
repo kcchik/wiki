@@ -1,6 +1,6 @@
 # Wiki
 
-An attempt at a small, but usable wiki engine.
+Small doo doo wiki engine.
 
 ### Requirements
 - Node.js
@@ -26,11 +26,3 @@ yarn run build
 ```sh
 yarn start
 ```
-
-### Why
-I created this wiki because I wanted to host something very minimal. Couldn't find anything out there quite as lacking in features as I wanted. Here are some of this wiki's (lack of) features:
-- No framework
-- No client-side JS
-- Minimal dependencies
-
-Behold - My tiny wiki. I should not have made this.

@@ -1,6 +1,6 @@
 # Wiki
 
-Markdown wiki engine.
+Markdown wiki.
 
 ### Requirements
 - Node.js

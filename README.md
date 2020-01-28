@@ -2,11 +2,6 @@
 
 Markdown wiki.
 
-### Requirements
-- Node.js
-- PostgreSQL
-- Yarn
-
 ### Installing
 Create a PostgreSQL database
 

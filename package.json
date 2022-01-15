@@ -5,7 +5,7 @@
   },
   "dependencies": {
     "dotenv": "^8.1.0",
-    "marked": "^0.7.0",
+    "marked": "^4.0.10",
     "pg": "^7.12.1"
   }
 }
